@@ -6,14 +6,22 @@ import {
   Header,
   Grid,
   Button,
-  Segment
+  Segment,
 } from "semantic-ui-react";
-import * as styles from "./Calculator.module.css"
+import * as styles from "./Calculator.module.css";
+import * as calc from "../calculations/calculations.js";
 
 const waterUnits = [
   { key: "kg", text: "kg", value: "kg" },
   { key: "g", text: "g", value: "g" },
   { key: "gal", text: "gal", value: "gal" },
+];
+
+const iceUnits = [
+  { key: "kg", text: "kg", value: "kg" },
+  { key: "g", text: "g", value: "g" },
+  { key: "gal", text: "gal", value: "gal" },
+  { key: "lbs", text: "lbs", value: "lbs"},
 ];
 
 const tempUnits = [
@@ -35,6 +43,9 @@ const Calculator = () => {
       value: 0,
       units: "C",
     },
+    result: {
+      units: "lbs"
+    }
   });
   const [ice, setIce] = useState(0);
 
@@ -74,52 +85,30 @@ const Calculator = () => {
     setWaterParams(newWater);
   };
 
+  const OnIceUnitsChange = (e, data) => {
+    var newWater = waterParams;
+    newWater.result.units = data.value;
+    setWaterParams(newWater);
+    calculateIce();
+  }
+
   const calculateIce = () => {
-    var t_s = waterParams.temp_start.value;
-    var t_f = waterParams.temp_finish.value;
-    var m_w = waterParams.amount.value;
-
-    switch (waterParams.amount.units) {
-      case 'g':
-        break;
-      case 'gal':
-        m_w *= 3785.4118;
-        break;
-      case 'kg':
-        m_w *= 1000;
-        break;
-    }
-
-    if (waterParams.temp_start.units === 'F') {
-      t_s = (t_s - 32) * 5/9
-    }
-
-    if (waterParams.temp_finish.units === 'F') {
-      t_f = (t_f - 32) * 5/9
-    }
-
-    var result = (4.186 * m_w * (t_s - t_f)) / (334 + 4.186* t_f);
-
-    switch (waterParams.amount.units) {
-      case 'g':
-        break;
-      case 'gal':
-        result /= 3785.4118;
-        break;
-      case 'kg':
-        result /= 1000;
-        break;
-    }
-
-
-    result = Math.round(result * 10) / 10
-    console.log(result);
+    var result = calc.calculateIce(
+      waterParams.temp_start.value,
+      waterParams.temp_start.units,
+      waterParams.temp_finish.value,
+      waterParams.temp_finish.units,
+      waterParams.amount.value,
+      waterParams.amount.units,
+      waterParams.result.units
+    );
+    console.log("Result:" + result);
     setIce(result);
   };
 
   return (
     <Container className={styles.container}>
-      <Header content="Inputs" textAlign="center" />
+      <Header content="How much ice do I need?" textAlign="center" />
       <Grid columns={1} centered>
         <Grid.Row>
           <Input
@@ -179,7 +168,19 @@ const Calculator = () => {
           <Button primary content="Calculate" onClick={calculateIce} />
         </Grid.Row>
         <Grid.Row>
-          <Segment content={ice + waterParams.amount.units}/>
+          <Container horizontal>
+            {"You need "}<b>{ice}</b>{" "}
+            <Dropdown
+                button
+                basic
+                floating
+                options={iceUnits}
+                defaultValue="lbs"
+                onChange={OnIceUnitsChange}
+              ></Dropdown>
+              {" of ice."}
+              
+          </Container>
         </Grid.Row>
       </Grid>
     </Container>
